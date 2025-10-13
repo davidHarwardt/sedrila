@@ -194,12 +194,12 @@ main section {
 }
 
 .task-indicator {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, 1fr);
+    display: flex;
     gap: 0.1rem;
     padding: 0.1rem;
 }
 
+.indicator-bar { flex-grow: 1; }
 .indicator-bar.task-check { background-color: #00a2ff; }
 .indicator-bar.task-unchecked { background-color: #ffb300; }
 .indicator-bar.task-accept { background-color: #21db00; }
