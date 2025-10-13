@@ -326,32 +326,34 @@ span.REJECTOID {
 """
 
 webapp_js = """
-function sedrila_replace() {
-    const span = this;
-    const data = { 
-      'id': span.id, 
-      'index': parseInt(span.dataset.index), 
-      'cssclass': span.className, 
-      'text': span.textContent
-    };
+// small script to save the scroll position of elements across reloads
 
-    fetch('%s', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+window.addEventListener("load", () => {
+    const keepScroll = [...document.querySelectorAll("[data-keep-scroll]")];
+
+    keepScroll.forEach(e => {
+        let timeout;
+        const id = e.getAttribute("data-keep-scroll");
+
+        const scrollData = sessionStorage.getItem(`keep-scroll-${id}`);
+        if(scrollData) {
+            const { left, top } = JSON.parse(scrollData);
+            e.scrollTo(left, top);
+        }
+
+        e.addEventListener("scroll", _ => {
+            clearTimeout(timeout);
+            timeout = setTimeout(_ => {
+                sessionStorage.setItem(`keep-scroll-${id}`, JSON.stringify({
+                    left: e.scrollLeft,
+                    top: e.scrollTop,
+                }));
+            }, 200);
+        });
     })
-        .then(response => response.json())
-        .then(json => {
-            span.className = json.cssclass;
-            span.textContent = json.text;
-      })
-      .catch(console.error);
-};
+})
 
-document.querySelectorAll('.sedrila-replace').forEach(t => {
-  t.addEventListener('click', sedrila_replace);
-});
-""" % SEDRILA_REPLACE_URL
+"""
 
 @bottle.route("/")
 def serve_index():
@@ -499,6 +501,7 @@ def serve_task(taskname: str, path: str | None = None):
                     <div>{tasklink}</div>
                 </div>
                 {file_markup}
+                <div class="spacer-lg"></div>
                 <div id="accept-buttons">
                     {buttons}
                 </div>
@@ -640,7 +643,7 @@ def html_for_layout(title: str, content: str, selected: str | None = None) -> st
 
     body = f"""
         <div id="app">
-            <section id="task-select">
+            <section id="task-select" data-keep-scroll="task-select">
                 <a class="item" id="home-link" href="/">Home</a>
                 <ul id="task-list">
                     {tasks_html}
